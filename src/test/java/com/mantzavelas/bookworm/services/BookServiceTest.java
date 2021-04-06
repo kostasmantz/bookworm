@@ -3,17 +3,16 @@ package com.mantzavelas.bookworm.services;
 import com.mantzavelas.bookworm.converters.BookResourceToBook;
 import com.mantzavelas.bookworm.converters.BookToBookResource;
 import com.mantzavelas.bookworm.exceptions.InvalidIsbnException;
+import com.mantzavelas.bookworm.exceptions.ResourceNotFoundException;
 import com.mantzavelas.bookworm.models.Book;
 import com.mantzavelas.bookworm.models.BookStatus;
 import com.mantzavelas.bookworm.repositories.AuthorRepository;
 import com.mantzavelas.bookworm.repositories.BookRepository;
 import com.mantzavelas.bookworm.repositories.PublisherRepository;
 import com.mantzavelas.bookworm.resources.BookResource;
-import com.mantzavelas.bookworm.resources.PublisherResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -40,6 +39,7 @@ class BookServiceTest {
     private BookService service;
 
     private Book book;
+    private Book updated;
 
     @BeforeEach
     void setUp() {
@@ -50,6 +50,12 @@ class BookServiceTest {
         book.setTitle(BOOK_TITLE);
         book.setStatus(BookStatus.LIVE);
         book.setIsbn(VALID_ISBN);
+
+        updated = new Book();
+        updated.setId(BOOK_ID);
+        updated.setTitle("New title");
+        updated.setStatus(BookStatus.LIVE);
+        updated.setIsbn(VALID_ISBN);
     }
 
     @Test
@@ -93,5 +99,46 @@ class BookServiceTest {
         assertEquals(BOOK_ID, savedBook.getId());
         assertNull(savedBook.getAuthorId());
         assertNull(savedBook.getPublisherId());
+    }
+
+    @Test
+    void testCreateOrUpdateBookWithInvalidIsbn_ShouldThrowException() {
+        BookResource resource = BookResource.builder()
+                .title("Dummy book")
+                .status(BookStatus.LIVE)
+                .isbn("123456")
+                .build();
+
+        assertThrows(InvalidIsbnException.class, () ->service.createOrUpdateBook(1L, resource));
+    }
+
+    @Test
+    void testCreateOrUpdateBookWithValidIsbnButNotFoundId_ShouldThrowException() {
+        when(bookRepository.existsById(any())).thenReturn(false);
+
+        BookResource resource = BookResource.builder()
+                .title(BOOK_TITLE)
+                .status(BookStatus.LIVE)
+                .isbn(VALID_ISBN)
+                .build();
+
+        assertThrows(ResourceNotFoundException.class, () -> service.createOrUpdateBook(1L, resource));
+    }
+
+    @Test
+    void testCreateOrUpdateBookWithValidIsbn_ShouldUpdate() {
+        when(bookRepository.existsById(any())).thenReturn(true);
+        when(bookRepository.save(any())).thenReturn(updated);
+
+        BookResource resource = BookResource.builder()
+                .title("New title")
+                .status(BookStatus.LIVE)
+                .isbn(VALID_ISBN)
+                .build();
+
+        BookResource updatedBook = service.createOrUpdateBook(1L, resource);
+
+        assertEquals(updatedBook.getId(), updated.getId());
+        assertEquals(updatedBook.getTitle(), updated.getTitle());
     }
 }

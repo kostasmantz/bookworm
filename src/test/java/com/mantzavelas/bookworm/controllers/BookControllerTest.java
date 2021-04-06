@@ -1,7 +1,6 @@
 package com.mantzavelas.bookworm.controllers;
 
 import com.mantzavelas.bookworm.commons.JsonUtil;
-import com.mantzavelas.bookworm.models.Book;
 import com.mantzavelas.bookworm.models.BookStatus;
 import com.mantzavelas.bookworm.resources.BookResource;
 import com.mantzavelas.bookworm.services.BookService;
@@ -17,9 +16,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -111,6 +110,71 @@ class BookControllerTest {
                     .content(JsonUtil.toJsonString(resource)))
                     .andExpect(status().isOk())
                     .andExpect(content().json(JsonUtil.toJsonString(returnedResource)));
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    void testUpdateBookWithMissingTitle_ShouldReturn400() {
+        BookResource resource = BookResource.builder()
+                .status(BookStatus.LIVE)
+                .isbn(BOOK_ISBN)
+                .build();
+        try {
+            mockMvc.perform(put("/api/books/1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(JsonUtil.toJsonString(resource)))
+                    .andExpect(status().isBadRequest());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    void testUpdateBookWithMissingStatus_ShouldReturn400() {
+        BookResource resource = BookResource.builder()
+                .title(BOOK_TITLE)
+                .isbn(BOOK_ISBN)
+                .build();
+        try {
+            mockMvc.perform(put("/api/books/1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(JsonUtil.toJsonString(resource)))
+                    .andExpect(status().isBadRequest());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    void testUpdateBookWithMissingIsbn_ShouldReturn400() {
+        BookResource resource = BookResource.builder()
+                .title(BOOK_TITLE)
+                .status(BookStatus.EDITING)
+                .build();
+        try {
+            mockMvc.perform(put("/api/books/1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(JsonUtil.toJsonString(resource)))
+                    .andExpect(status().isBadRequest());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    void testUpdateBookWithAllRequiredFields_ShouldReturn200() {
+        BookResource resource = BookResource.builder()
+            .title(BOOK_TITLE)
+            .status(BookStatus.EDITING)
+            .isbn(BOOK_ISBN)
+            .build();
+        try {
+            mockMvc.perform(put("/api/books/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JsonUtil.toJsonString(resource)))
+                .andExpect(status().isOk());
         } catch (Exception e) {
             fail(e);
         }

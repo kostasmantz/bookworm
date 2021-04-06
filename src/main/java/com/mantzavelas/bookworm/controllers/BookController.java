@@ -22,8 +22,8 @@ public class BookController {
     }
 
     @PutMapping("/{bookId}")
-    public BookResource updateBook(@RequestBody BookResource resource) {
-        return null;
+    public BookResource updateBook(@PathVariable Long bookId, @Valid @RequestBody BookResource resource) {
+        return bookService.createOrUpdateBook(bookId, resource);
     }
 
     @DeleteMapping("/{bookId}")
