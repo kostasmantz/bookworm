@@ -51,4 +51,12 @@ public class BookService {
             throw new InvalidIsbnException("Invalid ISBN. A book with the same ISBN already exists.");
         }
     }
+
+    public void deleteBook(Long bookId) {
+        if (!bookRepository.existsById(bookId)) {
+            throw new ResourceNotFoundException("Book not found with id " + bookId);
+        }
+
+        bookRepository.deleteById(bookId);
+    }
 }

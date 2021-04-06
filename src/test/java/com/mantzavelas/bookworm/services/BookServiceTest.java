@@ -16,16 +16,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
 
-    private static final long BOOK_ID = 1L;
+    private static final Long BOOK_ID = 1L;
     private static final String BOOK_TITLE = "Dummy book";
     private static final String VALID_ISBN = "9780684800011";
 
@@ -140,5 +139,21 @@ class BookServiceTest {
 
         assertEquals(updatedBook.getId(), updated.getId());
         assertEquals(updatedBook.getTitle(), updated.getTitle());
+    }
+
+    @Test
+    void testDeleteBookForNonExistentId_ShouldThrowException() {
+        when(bookRepository.existsById(any())).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> service.deleteBook(BOOK_ID));
+    }
+
+    @Test
+    void testDeleteBookForExistentId_ShouldDelete() {
+        when(bookRepository.existsById(any())).thenReturn(true);
+
+        service.deleteBook(BOOK_ID);
+
+        verify(bookRepository).deleteById(BOOK_ID);
     }
 }

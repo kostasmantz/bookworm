@@ -16,9 +16,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -178,5 +178,18 @@ class BookControllerTest {
         } catch (Exception e) {
             fail(e);
         }
+    }
+
+    @Test
+    void testDeleteBookWithValidIdParam_ShouldReturn200() {
+        try {
+            mockMvc.perform(delete("/api/books/1")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        verify(bookService).deleteBook(1L);
     }
 }
