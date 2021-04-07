@@ -1,5 +1,6 @@
 package com.mantzavelas.bookworm.controllers;
 
+import com.mantzavelas.bookworm.resources.BookDetailsResource;
 import com.mantzavelas.bookworm.resources.VisibleBookResource;
 import com.mantzavelas.bookworm.resources.BookResource;
 import com.mantzavelas.bookworm.services.BookService;
@@ -31,6 +32,11 @@ public class BookController {
     @DeleteMapping("/{bookId}")
     public void deleteBook(@PathVariable Long bookId) {
         bookService.deleteBook(bookId);
+    }
+
+    @GetMapping("/{bookId}/details")
+    public BookDetailsResource getBookDetails(@PathVariable Long bookId) {
+        return bookService.getDetailsForBook(bookId);
     }
 
     @GetMapping("/visible")

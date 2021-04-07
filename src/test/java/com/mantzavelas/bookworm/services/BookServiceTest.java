@@ -1,6 +1,7 @@
 package com.mantzavelas.bookworm.services;
 
 import com.mantzavelas.bookworm.converters.BookResourceToBook;
+import com.mantzavelas.bookworm.converters.BookToBookDetailsResource;
 import com.mantzavelas.bookworm.converters.BookToVisibleBookResource;
 import com.mantzavelas.bookworm.converters.BookToBookResource;
 import com.mantzavelas.bookworm.exceptions.InvalidIsbnException;
@@ -11,6 +12,7 @@ import com.mantzavelas.bookworm.models.Publisher;
 import com.mantzavelas.bookworm.repositories.AuthorRepository;
 import com.mantzavelas.bookworm.repositories.BookRepository;
 import com.mantzavelas.bookworm.repositories.PublisherRepository;
+import com.mantzavelas.bookworm.resources.BookDetailsResource;
 import com.mantzavelas.bookworm.resources.BookResource;
 import com.mantzavelas.bookworm.resources.VisibleBookResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,7 +55,8 @@ class BookServiceTest {
         service = new BookService(bookRepository,
                 new BookResourceToBook(authorRepository, publisherRepository),
                 new BookToBookResource(),
-                new BookToVisibleBookResource());
+                new BookToVisibleBookResource(),
+                new BookToBookDetailsResource());
 
         book = new Book();
         book.setId(BOOK_ID);
@@ -183,5 +187,22 @@ class BookServiceTest {
         verify(bookRepository).findAllByStatus(any());
         assertEquals(1, bookResources.size());
         assertTrue(bookResources.get(0).getDescription().length() <= 103);
+    }
+
+    @Test
+    void testGetDetailsForBookWhenNotFound_ShouldThrowException() {
+        when(bookRepository.findById(any())).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.getDetailsForBook(1L));
+    }
+
+    @Test
+    void testGetDetailsForBook_ShouldReturnResource() {
+        when(bookRepository.findById(any())).thenReturn(Optional.of(book));
+
+        BookDetailsResource resource = service.getDetailsForBook(1L);
+
+        assertEquals(book.getTitle(), resource.getTitle());
+        assertNull(resource.getAuthorEmail());
     }
 }
