@@ -9,7 +9,10 @@ import com.mantzavelas.bookworm.exceptions.ResourceNotFoundException;
 import com.mantzavelas.bookworm.models.Author;
 import com.mantzavelas.bookworm.models.Book;
 import com.mantzavelas.bookworm.models.BookStatus;
+import com.mantzavelas.bookworm.models.Publisher;
+import com.mantzavelas.bookworm.repositories.AuthorRepository;
 import com.mantzavelas.bookworm.repositories.BookRepository;
+import com.mantzavelas.bookworm.repositories.PublisherRepository;
 import com.mantzavelas.bookworm.resources.BookDetailsResource;
 import com.mantzavelas.bookworm.resources.VisibleBookResource;
 import com.mantzavelas.bookworm.resources.BookResource;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,15 +30,20 @@ import java.util.stream.Collectors;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
+    private final PublisherRepository publisherRepository;
 
     private final BookResourceToBook bookConverter;
     private final BookToBookResource bookResourceConverter;
     private final BookToVisibleBookResource visibleBookResourceConverter;
     private final BookToBookDetailsResource bookDetailsConverter;
 
-    public BookService(BookRepository bookRepository, BookResourceToBook bookConverter, BookToBookResource bookResourceConverter
-            , BookToVisibleBookResource visibleBookResourceConverter, BookToBookDetailsResource bookDetailsConverter) {
+    public BookService(BookRepository bookRepository, AuthorRepository authorRepository, PublisherRepository publisherRepository,
+                       BookResourceToBook bookConverter, BookToBookResource bookResourceConverter,
+                       BookToVisibleBookResource visibleBookResourceConverter, BookToBookDetailsResource bookDetailsConverter) {
         this.bookRepository = bookRepository;
+        this.authorRepository = authorRepository;
+        this.publisherRepository = publisherRepository;
         this.bookConverter = bookConverter;
         this.bookResourceConverter = bookResourceConverter;
         this.visibleBookResourceConverter = visibleBookResourceConverter;
@@ -55,9 +64,12 @@ public class BookService {
 
         Book book = bookConverter.convert(resource);
         book.setId(bookId);
-        Book createdBook = bookRepository.save(book);
 
-        return bookResourceConverter.convert(createdBook);
+        Book savedBook = bookRepository.save(book);
+        updateBookAuthor(savedBook);
+        updateBookPublisher(savedBook);
+
+        return bookResourceConverter.convert(savedBook);
     }
 
     private void validateBookResource(BookResource resource, boolean isNew) {
@@ -67,6 +79,22 @@ public class BookService {
 
         if (isNew && bookRepository.existsByIsbn(resource.getIsbn())) {
             throw new InvalidIsbnException("Invalid ISBN. A book with the same ISBN already exists.");
+        }
+    }
+
+
+    private void updateBookPublisher(Book savedBook) {
+        if (savedBook.getPublisher() != null) {
+            Publisher publisher = savedBook.getPublisher();
+            publisher.getBooks().add(savedBook);
+        }
+    }
+
+    private void updateBookAuthor(Book savedBook) {
+        if (savedBook.getAuthor() != null) {
+            Author author = savedBook.getAuthor();
+            author.getBooks().add(savedBook);
+            authorRepository.save(author);
         }
     }
 

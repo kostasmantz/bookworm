@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -27,5 +28,5 @@ public class Author {
     private LocalDate dateOfBirth;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
-    private List<Book> books;
+    private List<Book> books = new ArrayList<>();
 }

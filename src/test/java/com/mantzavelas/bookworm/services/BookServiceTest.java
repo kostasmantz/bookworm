@@ -27,8 +27,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
@@ -53,7 +52,7 @@ class BookServiceTest {
     @BeforeEach
     void setUp() {
         service = new BookService(bookRepository,
-                new BookResourceToBook(authorRepository, publisherRepository),
+                authorRepository, publisherRepository, new BookResourceToBook(authorRepository, publisherRepository),
                 new BookToBookResource(),
                 new BookToVisibleBookResource(),
                 new BookToBookDetailsResource());
@@ -130,6 +129,8 @@ class BookServiceTest {
                 .build();
 
         assertThrows(InvalidIsbnException.class, () ->service.createOrUpdateBook(1L, resource));
+        verifyNoInteractions(authorRepository);
+        verifyNoInteractions(publisherRepository);
     }
 
     @Test
@@ -143,6 +144,8 @@ class BookServiceTest {
                 .build();
 
         assertThrows(ResourceNotFoundException.class, () -> service.createOrUpdateBook(1L, resource));
+        verifyNoInteractions(authorRepository);
+        verifyNoInteractions(publisherRepository);
     }
 
     @Test
