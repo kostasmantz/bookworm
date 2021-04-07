@@ -1,14 +1,24 @@
 package com.mantzavelas.bookworm.services;
 
 import com.mantzavelas.bookworm.converters.BookResourceToBook;
+import com.mantzavelas.bookworm.converters.BookToVisibleBookResource;
 import com.mantzavelas.bookworm.converters.BookToBookResource;
 import com.mantzavelas.bookworm.exceptions.InvalidIsbnException;
 import com.mantzavelas.bookworm.exceptions.ResourceNotFoundException;
+import com.mantzavelas.bookworm.models.Author;
 import com.mantzavelas.bookworm.models.Book;
+import com.mantzavelas.bookworm.models.BookStatus;
 import com.mantzavelas.bookworm.repositories.BookRepository;
+import com.mantzavelas.bookworm.resources.VisibleBookResource;
 import com.mantzavelas.bookworm.resources.BookResource;
 import org.apache.commons.validator.routines.ISBNValidator;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class BookService {
@@ -16,11 +26,13 @@ public class BookService {
     private final BookRepository bookRepository;
     private final BookResourceToBook bookConverter;
     private final BookToBookResource bookResourceConverter;
+    private final BookToVisibleBookResource visibleBookResourceConverter;
 
-    public BookService(BookRepository bookRepository, BookResourceToBook bookConverter, BookToBookResource bookResourceConverter) {
+    public BookService(BookRepository bookRepository, BookResourceToBook bookConverter, BookToBookResource bookResourceConverter, BookToVisibleBookResource visibleBookResourceConverter) {
         this.bookRepository = bookRepository;
         this.bookConverter = bookConverter;
         this.bookResourceConverter = bookResourceConverter;
+        this.visibleBookResourceConverter = visibleBookResourceConverter;
     }
 
 
@@ -58,5 +70,16 @@ public class BookService {
         }
 
         bookRepository.deleteById(bookId);
+    }
+
+    public List<VisibleBookResource> findAllVisible() {
+        List<Book> books = bookRepository.findAllByStatus(BookStatus.LIVE);
+
+        return books.stream()
+            .filter(book -> book.getPublisher() != null)
+            .sorted(Comparator.comparing(((Function<Book, Author>)Book::getAuthor).andThen(Author::getLastName))
+                    .thenComparing(Collections.reverseOrder(Comparator.comparing(Book::getId))))
+            .map(visibleBookResourceConverter::convert)
+            .collect(Collectors.toList());
     }
 }

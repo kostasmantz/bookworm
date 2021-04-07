@@ -1,10 +1,12 @@
 package com.mantzavelas.bookworm.controllers;
 
+import com.mantzavelas.bookworm.resources.VisibleBookResource;
 import com.mantzavelas.bookworm.resources.BookResource;
 import com.mantzavelas.bookworm.services.BookService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/books")
@@ -29,5 +31,10 @@ public class BookController {
     @DeleteMapping("/{bookId}")
     public void deleteBook(@PathVariable Long bookId) {
         bookService.deleteBook(bookId);
+    }
+
+    @GetMapping("/visible")
+    public List<VisibleBookResource> getAllVisibleBooks() {
+        return bookService.findAllVisible();
     }
 }

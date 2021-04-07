@@ -28,6 +28,7 @@ class BookControllerTest {
     private static final String BOOK_TITLE = "Dummy book";
     private static final String BOOK_ISBN = "9780684800011";
     private static final String ENDPOINT_API_BOOKS = "/api/books";
+    public static final String ENDPOINT_BOOKS_WITH_BOOK_ID = "/api/books/1";
 
     @Mock
     private BookService bookService;
@@ -122,7 +123,7 @@ class BookControllerTest {
                 .isbn(BOOK_ISBN)
                 .build();
         try {
-            mockMvc.perform(put("/api/books/1")
+            mockMvc.perform(put(ENDPOINT_BOOKS_WITH_BOOK_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(JsonUtil.toJsonString(resource)))
                     .andExpect(status().isBadRequest());
@@ -138,7 +139,7 @@ class BookControllerTest {
                 .isbn(BOOK_ISBN)
                 .build();
         try {
-            mockMvc.perform(put("/api/books/1")
+            mockMvc.perform(put(ENDPOINT_BOOKS_WITH_BOOK_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(JsonUtil.toJsonString(resource)))
                     .andExpect(status().isBadRequest());
@@ -154,7 +155,7 @@ class BookControllerTest {
                 .status(BookStatus.EDITING)
                 .build();
         try {
-            mockMvc.perform(put("/api/books/1")
+            mockMvc.perform(put(ENDPOINT_BOOKS_WITH_BOOK_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(JsonUtil.toJsonString(resource)))
                     .andExpect(status().isBadRequest());
@@ -171,7 +172,7 @@ class BookControllerTest {
             .isbn(BOOK_ISBN)
             .build();
         try {
-            mockMvc.perform(put("/api/books/1")
+            mockMvc.perform(put(ENDPOINT_BOOKS_WITH_BOOK_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(JsonUtil.toJsonString(resource)))
                 .andExpect(status().isOk());
@@ -183,7 +184,7 @@ class BookControllerTest {
     @Test
     void testDeleteBookWithValidIdParam_ShouldReturn200() {
         try {
-            mockMvc.perform(delete("/api/books/1")
+            mockMvc.perform(delete(ENDPOINT_BOOKS_WITH_BOOK_ID)
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         } catch (Exception e) {
@@ -191,5 +192,18 @@ class BookControllerTest {
         }
 
         verify(bookService).deleteBook(1L);
+    }
+
+    @Test
+    void testGetAllVisibleBooks_ShouldReturn200() {
+        try {
+            mockMvc.perform(get("/api/books/visible")
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk());
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        verify(bookService).findAllVisible();
     }
 }
