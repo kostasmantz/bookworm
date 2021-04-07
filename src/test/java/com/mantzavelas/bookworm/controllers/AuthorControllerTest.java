@@ -1,6 +1,7 @@
 package com.mantzavelas.bookworm.controllers;
 
 import com.mantzavelas.bookworm.commons.JsonUtil;
+import com.mantzavelas.bookworm.exceptions.ResourceNotFoundException;
 import com.mantzavelas.bookworm.resources.AuthorResource;
 import com.mantzavelas.bookworm.services.AuthorService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,10 +14,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -60,15 +63,15 @@ class AuthorControllerTest {
     @Test
     void createAuthorWithMissingLastName_ShouldReturn400() {
         AuthorResource resource = AuthorResource.builder()
-                .firstName(AUTHOR_FIRSTNAME)
-                .email(AUTHOR_EMAIL)
-                .build();
+            .firstName(AUTHOR_FIRSTNAME)
+            .email(AUTHOR_EMAIL)
+            .build();
 
         try {
             mockMvc.perform(post("/api/authors")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(JsonUtil.toJsonString(resource)))
-                    .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest());
         } catch (Exception e) {
             fail(e);
         }
@@ -79,16 +82,16 @@ class AuthorControllerTest {
     @Test
     void createAuthorWithInvalidEmail_ShouldReturn400() {
         AuthorResource resource = AuthorResource.builder()
-                .firstName(AUTHOR_FIRSTNAME)
-                .lastName(AUTHOR_LASTNAME)
-                .email(INVALID_EMAIL)
-                .build();
+            .firstName(AUTHOR_FIRSTNAME)
+            .lastName(AUTHOR_LASTNAME)
+            .email(INVALID_EMAIL)
+            .build();
 
         try {
             mockMvc.perform(post("/api/authors")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(JsonUtil.toJsonString(resource)))
-                    .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest());
         } catch (Exception e) {
             fail(e);
         }
@@ -99,20 +102,46 @@ class AuthorControllerTest {
     @Test
     void createAuthorWithValidResource_ShouldReturn200() {
         AuthorResource resource = AuthorResource.builder()
-                .firstName(AUTHOR_FIRSTNAME)
-                .lastName(AUTHOR_LASTNAME)
-                .email(AUTHOR_EMAIL)
-                .build();
+            .firstName(AUTHOR_FIRSTNAME)
+            .lastName(AUTHOR_LASTNAME)
+            .email(AUTHOR_EMAIL)
+            .build();
 
         try {
             mockMvc.perform(post("/api/authors")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(JsonUtil.toJsonString(resource)))
-                    .andExpect(status().isOk());
+                .andExpect(status().isOk());
         } catch (Exception e) {
             fail(e);
         }
 
         verify(service).createNewAuthor(any());
+    }
+
+    @Test
+    void testGetAuthorBooksWithAuthorNotFound_ShouldReturn404() {
+        when(service.getBooks(any())).thenThrow(ResourceNotFoundException.class);
+
+        try {
+            mockMvc.perform(get("/api/authors/1/books")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+        } catch (Exception e) {
+            fail(e);
+        }
+    }
+
+    @Test
+    void testGetAuthorBooks_ShouldReturn200() {
+        when(service.getBooks(any())).thenReturn(Collections.emptyList());
+
+        try {
+            mockMvc.perform(get("/api/authors/1/books")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        } catch (Exception e) {
+            fail(e);
+        }
     }
 }
