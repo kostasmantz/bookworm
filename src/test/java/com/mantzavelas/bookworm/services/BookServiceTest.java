@@ -1,20 +1,26 @@
 package com.mantzavelas.bookworm.services;
 
 import com.mantzavelas.bookworm.converters.BookResourceToBook;
+import com.mantzavelas.bookworm.converters.BookToVisibleBookResource;
 import com.mantzavelas.bookworm.converters.BookToBookResource;
 import com.mantzavelas.bookworm.exceptions.InvalidIsbnException;
 import com.mantzavelas.bookworm.exceptions.ResourceNotFoundException;
 import com.mantzavelas.bookworm.models.Book;
 import com.mantzavelas.bookworm.models.BookStatus;
+import com.mantzavelas.bookworm.models.Publisher;
 import com.mantzavelas.bookworm.repositories.AuthorRepository;
 import com.mantzavelas.bookworm.repositories.BookRepository;
 import com.mantzavelas.bookworm.repositories.PublisherRepository;
 import com.mantzavelas.bookworm.resources.BookResource;
+import com.mantzavelas.bookworm.resources.VisibleBookResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,15 +45,19 @@ class BookServiceTest {
 
     private Book book;
     private Book updated;
+    List<Book> books;
 
     @BeforeEach
     void setUp() {
-        service = new BookService(bookRepository, new BookResourceToBook(authorRepository, publisherRepository), new BookToBookResource());
+        service = new BookService(bookRepository,
+                new BookResourceToBook(authorRepository, publisherRepository),
+                new BookToBookResource(),
+                new BookToVisibleBookResource());
 
         book = new Book();
         book.setId(BOOK_ID);
         book.setTitle(BOOK_TITLE);
-        book.setStatus(BookStatus.LIVE);
+        book.setStatus(BookStatus.CREATING);
         book.setIsbn(VALID_ISBN);
 
         updated = new Book();
@@ -55,6 +65,13 @@ class BookServiceTest {
         updated.setTitle("New title");
         updated.setStatus(BookStatus.LIVE);
         updated.setIsbn(VALID_ISBN);
+
+        books = List.of(
+                book,
+                new Book(2L, "Another Title"
+                        , "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum."
+                        , BookStatus.LIVE, LocalDate.now(), "465456465", null, new Publisher())
+        );
     }
 
     @Test
@@ -155,5 +172,16 @@ class BookServiceTest {
         service.deleteBook(BOOK_ID);
 
         verify(bookRepository).deleteById(BOOK_ID);
+    }
+
+    @Test
+    void testFindAllVisible_ShouldReturnList() {
+        when(bookRepository.findAllByStatus(any())).thenReturn(books);
+
+        List<VisibleBookResource> bookResources = service.findAllVisible();
+
+        verify(bookRepository).findAllByStatus(any());
+        assertEquals(1, bookResources.size());
+        assertTrue(bookResources.get(0).getDescription().length() <= 103);
     }
 }
