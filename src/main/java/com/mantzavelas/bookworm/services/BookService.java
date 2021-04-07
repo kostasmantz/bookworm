@@ -1,6 +1,7 @@
 package com.mantzavelas.bookworm.services;
 
 import com.mantzavelas.bookworm.converters.BookResourceToBook;
+import com.mantzavelas.bookworm.converters.BookToBookDetailsResource;
 import com.mantzavelas.bookworm.converters.BookToVisibleBookResource;
 import com.mantzavelas.bookworm.converters.BookToBookResource;
 import com.mantzavelas.bookworm.exceptions.InvalidIsbnException;
@@ -9,6 +10,7 @@ import com.mantzavelas.bookworm.models.Author;
 import com.mantzavelas.bookworm.models.Book;
 import com.mantzavelas.bookworm.models.BookStatus;
 import com.mantzavelas.bookworm.repositories.BookRepository;
+import com.mantzavelas.bookworm.resources.BookDetailsResource;
 import com.mantzavelas.bookworm.resources.VisibleBookResource;
 import com.mantzavelas.bookworm.resources.BookResource;
 import org.apache.commons.validator.routines.ISBNValidator;
@@ -24,15 +26,19 @@ import java.util.stream.Collectors;
 public class BookService {
 
     private final BookRepository bookRepository;
+
     private final BookResourceToBook bookConverter;
     private final BookToBookResource bookResourceConverter;
     private final BookToVisibleBookResource visibleBookResourceConverter;
+    private final BookToBookDetailsResource bookDetailsConverter;
 
-    public BookService(BookRepository bookRepository, BookResourceToBook bookConverter, BookToBookResource bookResourceConverter, BookToVisibleBookResource visibleBookResourceConverter) {
+    public BookService(BookRepository bookRepository, BookResourceToBook bookConverter, BookToBookResource bookResourceConverter
+            , BookToVisibleBookResource visibleBookResourceConverter, BookToBookDetailsResource bookDetailsConverter) {
         this.bookRepository = bookRepository;
         this.bookConverter = bookConverter;
         this.bookResourceConverter = bookResourceConverter;
         this.visibleBookResourceConverter = visibleBookResourceConverter;
+        this.bookDetailsConverter = bookDetailsConverter;
     }
 
 
@@ -81,5 +87,11 @@ public class BookService {
                     .thenComparing(Collections.reverseOrder(Comparator.comparing(Book::getId))))
             .map(visibleBookResourceConverter::convert)
             .collect(Collectors.toList());
+    }
+
+    public BookDetailsResource getDetailsForBook(Long bookId) {
+        Book book = bookRepository.findById(bookId).orElseThrow(() -> new ResourceNotFoundException("Book not found with id " + bookId));
+
+        return bookDetailsConverter.convert(book);
     }
 }

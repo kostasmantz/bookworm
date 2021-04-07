@@ -1,6 +1,7 @@
 package com.mantzavelas.bookworm.controllers;
 
 import com.mantzavelas.bookworm.commons.JsonUtil;
+import com.mantzavelas.bookworm.exceptions.ResourceNotFoundException;
 import com.mantzavelas.bookworm.models.BookStatus;
 import com.mantzavelas.bookworm.resources.BookResource;
 import com.mantzavelas.bookworm.services.BookService;
@@ -206,4 +207,32 @@ class BookControllerTest {
 
         verify(bookService).findAllVisible();
     }
+
+    @Test
+    void testGetBookDetails_ShouldReturn404() {
+        when(bookService.getDetailsForBook(any())).thenThrow(ResourceNotFoundException.class);
+        try {
+            mockMvc.perform(get("/api/books/1/details")
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        verify(bookService).getDetailsForBook(any());
+    }
+
+    @Test
+    void testGetBookDetails_ShouldReturn200() {
+        try {
+            mockMvc.perform(get("/api/books/1/details")
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk());
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        verify(bookService).getDetailsForBook(any());
+    }
+
 }
